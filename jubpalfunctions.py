@@ -2,7 +2,7 @@
 import multiprocessing
 from os import listdir, makedirs
 from os.path import exists, join
-from skimage import io, img_as_float32, img_as_uint, img_as_ubyte, filters, exposure
+from scikitimage import io, img_as_float32, img_as_uint, img_as_ubyte, filters, exposure
 import numpy 
 
 def blurdivide(img,sigma):
