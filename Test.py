@@ -1,5 +1,3 @@
-# import jubpalprocess as proc
-# import jubpalfunctions as func
 import random
 import cv2 as photo
 from scipy import ndimage
@@ -12,6 +10,9 @@ import os
 from os import listdir
 from progress.bar import Bar # Style — literally just style
 
+"""
+Run Blur and divide on a specified image
+"""
 def blurdivide(img, name):
     if not img.dtype == "float32":
         img = img_as_float32(img)
@@ -25,31 +26,28 @@ def blurdivide(img, name):
         name=name), filters.sobel(ratio))
 
 
-# img1 = photo.imread(img1)
-# img2 = photo.imread(img2)
-
-
+"""
+Convert images to rbg
+"""
 def rgb2gray(rgb):
     return np.dot(rgb[..., :3], [0.2989, 0.5870, 0.1140])
 
-
-# dim_2 = rgb2gray(img2)
-# dim_3 = rgb2gray(img2)
-
+"""
+Style Points 
+"""
 def BarProg(TempNext,Temp):
     if(TempNext > Temp):
         return TempNext
     return 0
-
-# For images of greater than 2D you need to resize it to an incredible degree
-def K_PCA(kernel):
+"""
+Run Kernel PCA on images in a directory
+"""
+def K_PCA(kernel,transform,invTrans):
     eigen_solver = "dense"  # auto|dense|arpack
     n_jobs = -1  # -1 means all cores
-    kpca = KernelPCA(n_components=47, kernel=kernel,eigen_solver=eigen_solver, n_jobs=n_jobs,fit_inverse_transform=True)
-
- 
+   
     # get the path/directory
-    print("starting fit")
+    print("collecting images")
     folder_dir = "/Users/chris/Documents/UR/SENIOR/FinalSemester/CSC249/Final/JubPalProcess"
     i = 0
     numTifs=0
@@ -57,6 +55,8 @@ def K_PCA(kernel):
         if (image.endswith(".tif")):
             numTifs+=1
     TempBar = Bar('Fitting a {kernel} Kernel'.format(kernel = kernel),fill='█',index=0,max=numTifs)
+    print("Starting Fit")
+    kpca = KernelPCA(n_components=numTifs, kernel=kernel,eigen_solver=eigen_solver, n_jobs=n_jobs,fit_inverse_transform=True)
     for image in os.listdir(folder_dir):
         # check if the image ends with png
         if (image.endswith(".tif")):
@@ -65,10 +65,25 @@ def K_PCA(kernel):
            img = rgb2gray(img)
            kpca.fit(img)
            i+=1
-           TempBar.index = i
            TempBar.next(i) 
     TempBar.finish()
-    print("fit completed! Plotting Eigenvalues")
+    if transform:
+        plotHistogramTransforms(kernel,kpca,folder_dir,numTifs)
+    if invTrans:
+        plotHistogramInverseTransforms(kernel,kpca,folder_dir,numTifs)
+    print("fit completed! Plotting Eigenvalues and saving Figure")
+    plt.plot(kpca.eigenvalues_)
+    plt.savefig("EigenValues_for_{kernel}_on_47".format(kernel = kernel))
+    plt.clf()
+    print('Done with {kernel}'.format(kernel = kernel))
+
+"""
+Plot the histograms of each KPCA transform
+"""
+def plotHistogramTransforms(kernel,kpca,folder_dir,numTifs):
+    print('Plotting Histograms for Transformed Images using {kernel} kernel'.format(kernel = kernel))
+    TempBar = Bar('Fitting a {kernel} Kernel'.format(kernel = kernel),fill='█',index=0,max=numTifs)
+    i = 0
     for image in os.listdir(folder_dir):
         if (image.endswith(".tif")):
             print("Transforming on Fit KPCA: {im}".format(im  = image))
@@ -81,27 +96,45 @@ def K_PCA(kernel):
             plt.plot(Histogram1,'r')
             plt.savefig("Histogram_{image}_{kernel}_inv_transform_KPCA_47.png".format(image=image,kernel = kernel))
             plt.clf()
-           
+            i+=1
+            TempBar.next(i)
+    TempBar.finish()
+"""
+Plot the histograms of each of the KPCA inverse transform
+"""    
+def plotHistogramInverseTransforms(kernel,kpca,folder_dir,numTifs):
+    print('Plotting Histograms for Inverse Transform Images using {kernel} kernel'.format(kernel = kernel))
+    TempBar = Bar('Fitting a {kernel} Kernel'.format(kernel = kernel),fill='█',index=0,max=numTifs)
+    for image in os.listdir(folder_dir):
+        if (image.endswith(".tif")):
+            print("Transforming on Fit KPCA: {im}".format(im  = image))
+            img = photo.imread(image)
+            img = rgb2gray(img)
+            out = kpca.inverse_transform(kpca.transform(img))
+            out = img_as_float32(out)
+            actualOut = out[:,1]
+            Histogram1 = photo.calcHist([actualOut],[0],mask=None,histSize=[256],ranges=[0,256])
+            plt.plot(Histogram1,'r')
+            plt.savefig("Histogram_{image}_{kernel}_inv_transform_KPCA_47.png".format(image=image,kernel = kernel))
+            plt.clf()
+            i+=1
+            TempBar.next(i)
+    TempBar.finish()
 
-    plt.plot(kpca.eigenvalues_)
-    plt.savefig("EigenValues_for_{kernel}_on_47".format(kernel = kernel))
-    plt.clf()
-    # plt.title("Kernel PCA")
-    # plt.scatter(X_kpca[:, 0], X_kpca[:, 1])
-    # plt.show()
-    # photo.imwrite('reconstructed_{kernel}_{name}.tif'.format(kernel = kernel,name=name),X_kpca)
-
-
-
+"""
+Take the log of each image
+"""
 def Log(img,name):
     out = (np.log(img + 1)) 
     out = np.array(out, dtype = np.uint8)
     photo.imwrite('Log_Texture_{name}.tif'.format(name=name),out)
     return out
 
+"""
+Generate a pure histogram for a raw image
+"""
 def HistogramGen():
-    #  folder_dir = "/Users/chris/Documents/UR/SENIOR/FinalSemester/CSC249/Final/JubPalProcess/"
-    folder_dir = "/Volumes/Extreme SSD/"
+    folder_dir = "/Users/chris/Documents/UR/SENIOR/FinalSemester/CSC249/Final/JubPalProcess/"
     for image in os.listdir(folder_dir):
         if (image.endswith(".tif")):
             print("Transforming on Fit KPCA: {im}".format(im  = image))
@@ -115,13 +148,14 @@ def HistogramGen():
             plt.clf()
 
 
-
-# # l1 = K_PCA(dim_2,"Band_01")
 kernels = ['rbf','linear','cosine','sigmoid']
 for k in kernels:
-    K_PCA(k)
+    K_PCA(k,False,False)
 
 # HistogramGen()
 
 # blurdivide(dim_2,"Band_07")
 # blurdivide(dim_3,"Band_08")
+
+# Min Ask - Max Bid = bid-ask spread
+
