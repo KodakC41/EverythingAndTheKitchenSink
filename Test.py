@@ -55,7 +55,7 @@ def K_PCA(kernel,transform,invTrans):
         if (image.endswith(".tif")):
             numTifs+=1
     TempBar = Bar('Fitting a {kernel} Kernel'.format(kernel = kernel),fill='█',index=0,max=numTifs)
-    print("Starting Fit")
+    print("Starting Fit",end=" ")
     kpca = KernelPCA(n_components=numTifs, kernel=kernel,eigen_solver=eigen_solver, n_jobs=n_jobs,fit_inverse_transform=True)
     for image in os.listdir(folder_dir):
         # check if the image ends with png
@@ -65,7 +65,7 @@ def K_PCA(kernel,transform,invTrans):
            img = rgb2gray(img)
            kpca.fit(img)
            i+=1
-           TempBar.next(i) 
+           TempBar.next() 
     TempBar.finish()
     if transform:
         plotHistogramTransforms(kernel,kpca,folder_dir,numTifs)
@@ -81,7 +81,7 @@ def K_PCA(kernel,transform,invTrans):
 Plot the histograms of each KPCA transform
 """
 def plotHistogramTransforms(kernel,kpca,folder_dir,numTifs):
-    print('Plotting Histograms for Transformed Images using {kernel} kernel'.format(kernel = kernel))
+    print('Plotting Histograms for Transformed Images using {kernel} kernel'.format(kernel = kernel),end=" ")
     TempBar = Bar('Fitting a {kernel} Kernel'.format(kernel = kernel),fill='█',index=0,max=numTifs)
     i = 0
     for image in os.listdir(folder_dir):
@@ -97,13 +97,14 @@ def plotHistogramTransforms(kernel,kpca,folder_dir,numTifs):
             plt.savefig("Histogram_{image}_{kernel}_inv_transform_KPCA_47.png".format(image=image,kernel = kernel))
             plt.clf()
             i+=1
-            TempBar.next(i)
+            TempBar.next(i-1)
     TempBar.finish()
+    print()
 """
 Plot the histograms of each of the KPCA inverse transform
 """    
 def plotHistogramInverseTransforms(kernel,kpca,folder_dir,numTifs):
-    print('Plotting Histograms for Inverse Transform Images using {kernel} kernel'.format(kernel = kernel))
+    print('Plotting Histograms for Inverse Transform Images using {kernel} kernel'.format(kernel = kernel),end=" ")
     TempBar = Bar('Fitting a {kernel} Kernel'.format(kernel = kernel),fill='█',index=0,max=numTifs)
     for image in os.listdir(folder_dir):
         if (image.endswith(".tif")):
@@ -118,8 +119,9 @@ def plotHistogramInverseTransforms(kernel,kpca,folder_dir,numTifs):
             plt.savefig("Histogram_{image}_{kernel}_inv_transform_KPCA_47.png".format(image=image,kernel = kernel))
             plt.clf()
             i+=1
-            TempBar.next(i)
+            TempBar.next(i-1)
     TempBar.finish()
+    print()
 
 """
 Take the log of each image
@@ -146,7 +148,6 @@ def HistogramGen():
             plt.plot(Histogram1,'r')
             plt.savefig("Histogram_{image}_RAW.png".format(image=image))
             plt.clf()
-
 
 kernels = ['rbf','linear','cosine','sigmoid']
 for k in kernels:
