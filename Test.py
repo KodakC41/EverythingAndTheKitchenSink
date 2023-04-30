@@ -232,7 +232,7 @@ def fid(ground_truth, transformed_image):
      return fid
 
 """
-Reccomended from : https://arxiv.org/pdf/2106.13156.pdf
+From : https://arxiv.org/pdf/2106.13156.pdf
 Calculates the Distance in disjointness between two images, the goal and the transformed 
 And shows how closely an image matches the style of another image. 
 """
